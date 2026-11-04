@@ -1,0 +1,88 @@
+{
+  "knowledge_meta": {
+    "level_id": "L2-1",
+    "level_name": "模型结构本体 (Model Structure Ontology)",
+    "scope": "Abstract Workflow Topology (抽象工作流拓扑)",
+    "description": "定义土壤侵蚀模型的逻辑骨架与因果依赖图谱。仅描述输入要素的功能角色与各计算节点之间的逻辑连接关系，不包含具体算子公式与数据反演方法。",
+    "version": "v2.0_Structure_Only"
+  },
+  "model_definition": {
+    "model_id": "MDL_RUSLE_STRUCT",
+    "model_name": "Revised Universal Soil Loss Equation (Structural View)",
+    "model_logic": "Multi-factor Coupling Framework (多因子耦合框架)",
+    "workflow_type": "Directed Acyclic Graph (DAG)"
+  },
+  "structural_components": {
+    "abstract_inputs": [
+      {
+        "node_role": "Topographic_Source",
+        "semantic_description": "表征地表高程起伏与形态特征的基础地理信息。",
+        "target_factor": "Terrain_Constraint_Factor"
+      },
+      {
+        "node_role": "Meteorological_Force",
+        "semantic_description": "表征降雨强度、历时及其动能特征的气象驱动信息。",
+        "target_factor": "Erosivity_Factor"
+      },
+      {
+        "node_role": "Edaphic_Attributes",
+        "semantic_description": "表征土壤物理结构与化学组成的固有属性信息。",
+        "target_factor": "Susceptibility_Factor"
+      },
+      {
+        "node_role": "Vegetation_Condition",
+        "semantic_description": "表征地表植物生长状况与覆盖密度的生物信息。",
+        "target_factor": "Cover_Management_Factor"
+      },
+      {
+        "node_role": "Anthropogenic_Management",
+        "semantic_description": "表征人类土地利用方式及水土保持措施的管理信息。",
+        "target_factor": "Support_Practice_Factor"
+      }
+    ],
+    "logic_nodes": [
+      {
+        "node_id": "NODE_R",
+        "factor_name": "降雨侵蚀力因子 (R)",
+        "logic_role": "Energy Driver Quantification (驱动能量量化)",
+        "dependency_input": "Meteorological_Force",
+        "function": "将气象驱动数据转化为对土壤分离与搬运能力的潜在能量指标。"
+      },
+      {
+        "node_id": "NODE_K",
+        "factor_name": "土壤可蚀性因子 (K)-EPIC模型",
+        "logic_role": "Inherent Vulnerability Assessment (固有脆弱性评估)",
+        "dependency_input": "Edaphic_Attributes",
+        "function": "评估土壤介质在特定外营力作用下发生破坏与流失的敏感性程度。"
+      },
+      {
+        "node_id": "NODE_LS",
+        "factor_name": "坡长坡度因子 (LS)",
+        "logic_role": "Geomorphic Acceleration Analysis (地貌加速效应分析)",
+        "dependency_input": "Topographic_Source",
+        "function": "解析微地貌形态（重力分量与汇流路径）对径流冲刷能量的放大作用。"
+      },
+      {
+        "node_id": "NODE_C",
+        "factor_name": "植被覆盖与管理因子 (C)",
+        "logic_role": "Biological Attenuation Analysis (生物削减效应分析)",
+        "dependency_input": "Vegetation_Condition",
+        "function": "量化植被冠层截留与地表覆盖对降雨动能及径流速度的抑制作用。"
+      },
+      {
+        "node_id": "NODE_P",
+        "factor_name": "水土保持措施因子 (P)",
+        "logic_role": "Artificial Regulation Analysis (人为调控效应分析)",
+        "dependency_input": "Anthropogenic_Management",
+        "function": "量化梯田、等高耕作等特定的工程或农业措施对土壤流失的阻控效果。"
+      }
+    ],
+    "synthesis_node": {
+      "node_id": "NODE_SYNTHESIS",
+      "target_output": "Soil Erosion Intensity (土壤侵蚀强度)",
+      "logic_role": "Multi-process Integration (多过程综合)",
+      "topology_inputs": ["NODE_R", "NODE_K", "NODE_LS", "NODE_C", "NODE_P"],
+      "function": "综合降雨驱动、地形加剧、土壤易损、植被抑制及人为调控五大逻辑模块，输出最终的侵蚀量化结果。"
+    }
+  }
+}

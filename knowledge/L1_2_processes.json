@@ -1,0 +1,86 @@
+{
+  "knowledge_meta": {
+    "level_id": "L1-2",
+    "level_name": "地理过程机理知识 (Geographic Process Mechanism Knowledge)",
+    "scope": "Physical Mechanisms & Natural Causality (物理机制与自然因果)",
+    "description": "描述黄土高原水土流失背后的自然动力学过程与环境要素的相互作用机制，严格排除人为设定的建模因子、计算公式与算法逻辑。",
+    "version": "v2.0_Pure_Physical"
+  },
+  "ontology_concepts": [
+    {
+      "id": "MECH_001",
+      "term": "雨滴击溅效应 (Raindrop Splash Effect)",
+      "category": "Hydrodynamic Process (水动力过程)",
+      "definition": "降雨作为外营力，其雨滴以特定终极速度撞击地表，将巨大的动能瞬间传递给土壤表层，导致土壤团粒结构破碎并发生位移的物理过程。",
+      "attributes": {
+        "energy_source": "降雨动能 (Rainfall Kinetic Energy)",
+        "physical_outcome": "表层结皮破坏 & 颗粒飞溅",
+        "dynamic_feature": "瞬时冲击 (Instantaneous Impact)"
+      },
+      "semantic_relations": {
+        "initiates": "土壤颗粒剥离",
+        "restrained_by": "地表覆盖层 (植被/枯枝落叶)"
+      }
+    },
+    {
+      "id": "MECH_002",
+      "term": "地表径流剪切机制 (Surface Runoff Shearing Mechanism)",
+      "category": "Hydrological Transport (水文搬运)",
+      "definition": "当降雨强度超过土壤入渗能力时产生超渗产流，沿坡面流动的水流产生剪切应力（Shear Stress），当该应力超过土壤起动临界值时，剥离并搬运松散土粒。",
+      "attributes": {
+        "driving_force": "重力分量 (Gravity Component)",
+        "critical_condition": "流速 > 起动流速",
+        "transport_mode": "悬移 (Suspension) & 推移 (Bedload)"
+      },
+      "semantic_relations": {
+        "accelerated_by": "陡坡地形",
+        "results_in": "细沟与切沟发育"
+      }
+    },
+    {
+      "id": "MECH_003",
+      "term": "地形重力加速效应 (Gravitational Acceleration by Topography)",
+      "category": "Geomorphic Control (地貌控制)",
+      "definition": "地形起伏直接决定了重力势能向动能转化的效率。坡度增加了沿坡面的重力分量，导致径流加速；坡长提供了径流汇集的空间距离，导致流量累积，二者共同放大了水流的冲刷能量。",
+      "attributes": {
+        "energy_conversion": "势能 -> 动能",
+        "scale_effect": "汇流累积 (Flow Accumulation)",
+        "spatial_pattern": "沟壑边缘侵蚀加剧"
+      },
+      "semantic_relations": {
+        "amplifies": "地表径流剪切机制",
+        "dependent_on": "微地貌形态"
+      }
+    },
+    {
+      "id": "MECH_004",
+      "term": "土壤抗剪切稳定性 (Soil Shear Strength Stability)",
+      "category": "Material Resistance (介质抗性)",
+      "definition": "土壤介质依靠颗粒间的胶结力、摩擦力以及团粒结构的完整性，抵抗水动力剥离和分散的内在物理化学属性。黄土疏松多孔、垂直节理发育的特性使其抗剪切能力天然较弱。",
+      "attributes": {
+        "intrinsic_property": "团粒水稳性 (Aggregate Stability)",
+        "key_component": "粘粒含量 & 有机胶体",
+        "failure_mode": "崩解 (Slaking) & 分散 (Dispersion)"
+      },
+      "semantic_relations": {
+        "resists": "水动力侵蚀作用",
+        "enhanced_by": "土壤有机质积累"
+      }
+    },
+    {
+      "id": "MECH_005",
+      "term": "植被截留与根系固持 (Vegetation Interception & Root Reinforcement)",
+      "category": "Biological Regulation (生物调节)",
+      "definition": "植被通过地上部分的冠层截留降雨（消耗动能）、枯枝落叶层增加地表粗糙度（减缓流速），以及地下根系网络对土体的机械缠绕与锚固作用，从三个层次阻控侵蚀发生。",
+      "attributes": {
+        "canopy_effect": "消能 (Energy Dissipation)",
+        "surface_effect": "增阻 (Friction Increase)",
+        "root_effect": "锚固 (Anchoring)"
+      },
+      "semantic_relations": {
+        "mitigates": ["雨滴击溅效应", "地表径流剪切机制"],
+        "improves": "土壤抗剪切稳定性"
+      }
+    }
+  ]
+}

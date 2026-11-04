@@ -1,0 +1,84 @@
+{
+  "knowledge_meta": {
+    "level_id": "L1-1",
+    "level_name": "地理领域通识本体 (Domain General Ontology)",
+    "scope": "Declarative Knowledge (陈述性知识)",
+    "description": "包含黄土高原土壤侵蚀建模所需的核心实体定义与语义关系，严格剔除过程机理与计算公式。",
+    "version": "v2.0_Academic"
+  },
+  "ontology_concepts": [
+    {
+      "id": "CPT_001",
+      "term": "水力土壤侵蚀 (Water-induced Soil Erosion)",
+      "category": "Geomorphological Process (地貌过程)",
+      "definition": "在地表径流和降雨打击的双重水动力作用下，土壤颗粒发生物理剥离（Detachment）、搬运（Transport）及异地沉积（Deposition）的地表地质过程。",
+      "attributes": {
+        "dominant_agent": "水动力 (Hydrodynamic Force)",
+        "spatial_context": "地表界面 (Surface Interface)",
+        "key_forms": ["溅蚀 (Splash)", "面蚀 (Sheet)", "细沟侵蚀 (Rill)", "切沟侵蚀 (Gully)"]
+      },
+      "semantic_relations": {
+        "occurs_in": "黄土高原地理环境",
+        "driven_by": "降雨侵蚀力",
+        "resisted_by": "土壤抗蚀性"
+      }
+    },
+    {
+      "id": "CPT_002",
+      "term": "降雨侵蚀力 (Rainfall Erosivity)",
+      "category": "Driving Force (驱动力)",
+      "definition": "降雨引起土壤侵蚀的潜在能力，通常由降雨过程的动能（Kinetic Energy）与最大时段雨强的耦合作用决定，反映了外营力的强度。",
+      "attributes": {
+        "physical_basis": "雨滴击溅动能 & 径流剪切力",
+        "temporal_scale": "次降雨 / 月 / 年",
+        "unit_type": "能量强度指数 (Energy-Intensity Index)"
+      },
+      "semantic_relations": {
+        "positive_correlation_to": "水力土壤侵蚀",
+        "derived_from": "降雨气象数据"
+      }
+    },
+    {
+      "id": "CPT_003",
+      "term": "土壤可蚀性 (Soil Erodibility)",
+      "category": "Material Property (介质属性)",
+      "definition": "土壤对水动力剥离和搬运的敏感程度（易损性），由土壤的物理化学性质（如质地、有机质含量、团粒结构、渗透性）内在决定。",
+      "attributes": {
+        "soil_type_context": "黄土 (Loess) - 高粉粒、低粘聚力",
+        "physical_meaning": "单位侵蚀外营力下的土壤流失量",
+        "influencing_factors": ["机械组成", "有机质", "剖面结构"]
+      },
+      "semantic_relations": {
+        "inverse_correlation_to": "土壤抗蚀性",
+        "determined_by": "土壤质地数据"
+      }
+    },
+    {
+      "id": "CPT_004",
+      "term": "地形地貌因子 (Topographic Factors)",
+      "category": "Environmental Control (环境控制要素)",
+      "definition": "地表形态对地表径流运动状态的几何约束特征，核心要素包括坡度（决定重力分量与流速）和坡长（决定汇流累积量）。",
+      "attributes": {
+        "key_components": ["坡度 (Slope Gradient)", "坡长 (Slope Length)"],
+        "geomorphic_impact": "加速径流 & 放大冲刷能量"
+      },
+      "semantic_relations": {
+        "extracted_from": "数字高程模型 (DEM)"
+      }
+    },
+    {
+      "id": "CPT_005",
+      "term": "土壤侵蚀模数 (Soil Erosion Modulus)",
+      "category": "Quantification Metric (量化指标)",
+      "definition": "单位面积、单位时间内的土壤流失总量，是表征区域水土流失强度的核心分级指标。",
+      "attributes": {
+        "standard_unit": "t·km⁻²·a⁻¹ (吨/平方千米/年)",
+        "application": "侵蚀强度分级 (微度/轻度/中度/强烈/剧烈)"
+      },
+      "semantic_relations": {
+        "is_output_of": "土壤侵蚀模型",
+        "used_for": "生态风险评估"
+      }
+    }
+  ]
+}

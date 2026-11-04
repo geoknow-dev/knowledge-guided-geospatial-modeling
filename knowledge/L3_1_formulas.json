@@ -1,0 +1,140 @@
+{
+  "knowledge_meta": {
+    "level_id": "L3-1",
+    "level_name": "算法公式本体 (Algorithm & Formula Ontology)",
+    "scope": "Mathematical Equations & Logical Rules (数学方程与逻辑规则)",
+    "description": "定义RUSLE模型中R、K、LS、C因子的具体数学计算公式、经验系数及分段逻辑，支持代码生成的算子实例化。",
+    "version": "v2.0_Loess_Plateau_Formulas"
+  },
+  "algorithms": [
+    {
+      "algo_id": "ALGO_R_WISCHMEIER",
+      "factor_target": "Factor_R (降雨侵蚀力)",
+      "method_name": "Wischmeier Simplified Model (Monthly-Annual)",
+      "source_ref": "Image_92528f",
+      "description": "基于月降雨量和年降雨量的对数关系估算年降雨侵蚀力。",
+      "input_variables": {
+        "P_list": "List of 12 raster arrays (Monthly Rainfall, mm, Jan-Dec)",
+        "P_annual": "Raster array (Annual Rainfall, mm)"
+      },
+      "formula_logic": {
+        "type": "Aggregation_Sum",
+        "math_step": "R = Sum(1.735 * 10^(1.5 * lg(Pi^2 / P) - 0.8188))",
+        "python_implementation": "R_factor = np.sum([1.735 * np.power(10, (1.5 * np.log10(P_i**2 / P_annual) - 0.8188)) for P_i in P_list], axis=0)"
+      },
+      "unit": "MJ·mm/(hm²·h·a)"
+    },
+    {
+      "algo_id": "ALGO_K_EPIC",
+      "factor_target": "Factor_K (土壤可蚀性)",
+      "method_name": "EPIC Model (Sharply & Williams)",
+      "source_ref": "Image_925344",
+      "description": "基于土壤颗粒组成（砂粒、粉粒、黏粒）和有机碳含量的多项式组合模型。",
+      "input_variables": {
+        "san": "Sand content (%) (0-100)",
+        "sil": "Silt content (%) (0-100)",
+        "cla": "Clay content (%) (0-100)",
+        "orgC": "Organic Carbon (%) (0-100)"
+      },
+      "formula_logic": {
+        "type": "Complex_Equation",
+        "intermediate_vars": {
+          "sn1": "1.0 - san / 100.0"
+        },
+        "python_steps": [
+          "term1 = 0.2 + 0.3 * np.exp(-0.0256 * san * (1.0 - sil / 100.0))",
+          "term2 = np.power(sil / (cla + sil), 0.3)",
+          "term3 = 1.0 - (0.25 * orgC) / (orgC + np.exp(3.72 - 2.95 * orgC))",
+          "term4 = 1.0 - (0.7 * sn1) / (sn1 + np.exp(-5.51 + 22.9 * sn1))",
+          "K_factor = term1 * term2 * term3 * term4"
+        ]
+      },
+      "unit": "t·hm²·h/(hm²·MJ·mm)"
+    },
+    {
+      "algo_id": "ALGO_S_FACTOR",
+      "factor_target": "Factor_S (坡度因子)",
+      "method_name": "McCool & Liu Baoyuan Combined",
+      "source_ref": "Image_925e6d (Eq 4)",
+      "description": "针对黄土高原地形特征优化的分段坡度计算公式。",
+      "input_variables": {
+        "slope_deg": "Slope in degrees (Raster)"
+      },
+      "formula_logic": {
+        "type": "Piecewise_Function",
+        "preprocessing": "theta = np.deg2rad(slope_deg)",
+        "branches": [
+          {
+            "condition": "slope_deg < 5.0",
+            "expression": "10.8 * np.sin(theta) + 0.03"
+          },
+          {
+            "condition": "(slope_deg >= 5.0) & (slope_deg < 10.0)",
+            "expression": "16.8 * np.sin(theta) - 0.05"
+          },
+          {
+            "condition": "slope_deg >= 10.0",
+            "expression": "21.92 * np.sin(theta) - 0.96"
+          }
+        ]
+      }
+    },
+    {
+      "algo_id": "ALGO_L_FACTOR",
+      "factor_target": "Factor_L (坡长因子)",
+      "method_name": "Power Function with Variable Exponent",
+      "source_ref": "Image_925e6d (Eq 5 & 6)",
+      "description": "基于标准小区长度(22.13m)的幂函数，指数m随坡度变化。",
+      "input_variables": {
+        "slope_len": "Slope Length (lambda) in meters",
+        "slope_deg": "Slope in degrees"
+      },
+      "formula_logic": {
+        "type": "Dynamic_Exponent",
+        "exponent_m_logic": [
+          { "condition": "slope_deg >= 3.0", "value": 0.5 },
+          { "condition": "(slope_deg >= 1.5) & (slope_deg < 3.0)", "value": 0.4 },
+          { "condition": "(slope_deg >= 0.5) & (slope_deg < 1.5)", "value": 0.3 },
+          { "condition": "slope_deg < 0.5", "value": 0.2 }
+        ],
+        "final_expression": "L_factor = np.power(slope_len / 22.13, m)"
+      }
+    },
+    {
+      "algo_id": "ALGO_C_NDVI",
+      "factor_target": "Factor_C (植被覆盖因子)",
+      "method_name": "Cai Chongfa NDVI Inversion",
+      "source_ref": "Image_925362",
+      "description": "基于NDVI像元二分法估算植被覆盖度，再反演C因子。",
+      "input_variables": {
+        "ndvi": "NDVI Raster",
+        "ndvi_min": "0.05 (Soil Baseline)",
+        "ndvi_max": "0.95 (Vegetation Peak)"
+      },
+      "formula_logic": {
+        "type": "Sequential_Calculation",
+        "step_1_coverage": {
+          "concept": "Vegetation Coverage (f_c)",
+          "expression": "f_c = (ndvi - ndvi_min) / (ndvi_max - ndvi_min)",
+          "constraint": "f_c = np.clip(f_c, 0, 1) # Ensure range [0,1]"
+        },
+        "step_2_c_factor": {
+          "branches": [
+            {
+              "condition": "f_c == 0",
+              "expression": "1.0"
+            },
+            {
+              "condition": "(f_c > 0) & (f_c <= 0.783)",
+              "expression": "0.6508 - 0.3436 * np.log(f_c)"
+            },
+            {
+              "condition": "f_c > 0.783",
+              "expression": "0.0"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

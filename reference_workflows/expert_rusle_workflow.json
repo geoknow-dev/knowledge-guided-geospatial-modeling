@@ -1,0 +1,275 @@
+[
+  {
+    "step_id": 1,
+    "operation": "计算R因子（降雨侵蚀力，Wischmeier简化模型）",
+    "description": "使用2022年12个月降水栅格(Pi)与年降水栅格(P)，按像元计算月贡献并求和得到年R因子。采用Wischmeier降雨侵蚀力简化模型：R = Σ_{i=1..12}[1.735 × 10^(1.5 × log10(Pi/P) - 0.8188)]。要求Pi与P单位一致（mm），Pi/P为无量纲；对P=0或无效像元进行掩膜处理。",
+    "factor_name": "R",
+    "input_files": [
+      "rainfall_monthly",
+      "rainfall_year"
+    ],
+    "output_file": "R_factor_2022.tif",
+    "dependencies": [],
+    "tool_library": "rasterio, numpy",
+    "algorithm_formula": "Wischmeier Simplified Rainfall Erosivity Model",
+    "parameters": {
+      "constants": {
+        "coef": 1.735,
+        "exp_log10": 1.5,
+        "bias": 0.8188,
+        "base": 10
+      },
+      "thresholds": {
+        "P_min_valid_mm": 0.0
+      },
+      "lookup_table": {},
+      "units": "MJ·mm/(hm²·h·a)",
+      "notes": "按像元逐月计算并求和；P=0或NoData需排除以避免log10异常。"
+    }
+  },
+  {
+    "step_id": 2,
+    "operation": "计算K因子（土壤可蚀性，EPIC模型）",
+    "description": "使用砂粒(ms)、粉粒(msilt)、黏粒(mc)与有机碳(orgC)栅格（均为百分比0-100）计算K因子。采用EPIC经验模型（Sharpley & Williams）：K = {0.2 + 0.3 × exp[-0.0256×ms×(1-msilt/100)] × (msilt/(mc+msilt))^0.3 × [1 - (0.25×orgC)/(orgC+exp(3.72-2.95×orgC))]} × {1 - [0.7×(1-ms/100)]/[(1-ms/100)+exp(-5.51+22.9×(1-ms/100))]}。",
+    "factor_name": "K",
+    "input_files": [
+      "soil_sand",
+      "soil_silt",
+      "soil_clay",
+      "soil_toc"
+    ],
+    "output_file": "K_factor_2022.tif",
+    "dependencies": [],
+    "tool_library": "rasterio, numpy",
+    "algorithm_formula": "EPIC Soil Erodibility Factor (Sharpley & Williams)",
+    "parameters": {
+      "constants": {
+        "c0": 0.2,
+        "c1": 0.3,
+        "c2": 0.0256,
+        "p": 0.3,
+        "c3": 0.25,
+        "c4": 3.72,
+        "c5": 2.95,
+        "c6": 0.7,
+        "c7": 5.51,
+        "c8": 22.9
+      },
+      "thresholds": {
+        "min_percent": 0.0,
+        "max_percent": 100.0
+      },
+      "lookup_table": {},
+      "units": "t·h·MJ⁻¹·mm⁻¹",
+      "notes": "输入为百分比(0-100)。公式中出现(1-ms/100)等项，需确保数值范围合法并处理NoData。"
+    }
+  },
+  {
+    "step_id": 3,
+    "operation": "计算地形因子LS并同步输出坡度栅格（McCool + 刘宝元）",
+    "description": "从填洼DEM提取坡度slope_deg（度）并计算坡长λ（m），随后按分段公式计算S因子与L因子，最终LS=L×S。S因子（McCool分段，θ为坡度弧度）：slope_deg<5°: S=10.8*sin(θ)+0.03；5°≤slope_deg<10°: S=16.8*sin(θ)-0.05；slope_deg≥10°: S=21.92*sin(θ)-0.96。L因子：L=(λ/22.13)^m，m随坡度分段（刘宝元）：slope_deg<0.5°: m=0.2；0.5°≤<1.5°: m=0.3；1.5°≤<3.0°: m=0.4；≥3.0°: m=0.5。λ可由D8汇流累积/流向推导的坡长（沿最大汇流路径的长度）获得。除主输出LS_factor_2022.tif外，同时写出 slope_2022.tif 供P因子使用。",
+    "factor_name": "LS",
+    "input_files": [
+      "dem_filled"
+    ],
+    "output_file": "LS_factor_2022.tif",
+    "dependencies": [],
+    "tool_library": "rasterio, numpy, richdem",
+    "algorithm_formula": "McCool S-factor + LiuBaoyuan m-exponent + RUSLE L-factor; LS=L×S",
+    "parameters": {
+      "constants": {
+        "lambda_ref_m": 22.13,
+        "S1_a": 10.8,
+        "S1_b": 0.03,
+        "S2_a": 16.8,
+        "S2_b": -0.05,
+        "S3_a": 21.92,
+        "S3_b": -0.96
+      },
+      "thresholds": {
+        "S_piece_1_deg": 5.0,
+        "S_piece_2_deg": 10.0,
+        "m_piece_1_deg": 0.5,
+        "m_piece_2_deg": 1.5,
+        "m_piece_3_deg": 3.0
+      },
+      "lookup_table": {
+        "S_factor_piecewise": [
+          {
+            "condition": "slope_deg < 5.0",
+            "value": "10.8*sin(theta)+0.03"
+          },
+          {
+            "condition": "5.0 <= slope_deg < 10.0",
+            "value": "16.8*sin(theta)-0.05"
+          },
+          {
+            "condition": "slope_deg >= 10.0",
+            "value": "21.92*sin(theta)-0.96"
+          }
+        ],
+        "m_exponent_piecewise": [
+          {
+            "condition": "slope_deg < 0.5",
+            "value": 0.2
+          },
+          {
+            "condition": "0.5 <= slope_deg < 1.5",
+            "value": 0.3
+          },
+          {
+            "condition": "1.5 <= slope_deg < 3.0",
+            "value": 0.4
+          },
+          {
+            "condition": "slope_deg >= 3.0",
+            "value": 0.5
+          }
+        ]
+      },
+      "units": "dimensionless",
+      "notes": "该步骤除LS_factor_2022.tif外，还应输出 slope_2022.tif（坡度，度）。坡度需先转弧度theta=deg2rad(slope_deg)再代入sin。"
+    }
+  },
+  {
+    "step_id": 4,
+    "operation": "计算C因子（植被覆盖管理因子，蔡崇法NDVI反演）",
+    "description": "使用NDVI栅格计算植被覆盖度c，并按蔡崇法模型分段计算C因子。覆盖度：c=(NDVI-NDVImin)/(NDVImax-NDVImin)，并裁剪到[0,1]。C分段：c=0时C=1；0<c≤0.783时C=0.6508-0.3436*ln(c)；c>0.783时C=0。NDVImin/NDVImax由NDVI有效像元统计得到（如采用分位数以抑制异常值）。",
+    "factor_name": "C",
+    "input_files": [
+      "ndvi"
+    ],
+    "output_file": "C_factor_2022.tif",
+    "dependencies": [],
+    "tool_library": "rasterio, numpy",
+    "algorithm_formula": "Cai Chongfa NDVI-based C-factor Inversion",
+    "parameters": {
+      "constants": {
+        "intercept": 0.6508,
+        "coef_ln": 0.3436,
+        "c_sat": 0.783
+      },
+      "thresholds": {
+        "c_min": 0.0,
+        "c_max": 1.0,
+        "ndvi_min_method_percentile": 2,
+        "ndvi_max_method_percentile": 98
+      },
+      "lookup_table": {
+        "C_factor_piecewise": [
+          {
+            "condition": "c == 0",
+            "value": 1.0
+          },
+          {
+            "condition": "0 < c and c <= 0.783",
+            "value": "0.6508 - 0.3436*ln(c)"
+          },
+          {
+            "condition": "c > 0.783",
+            "value": 0.0
+          }
+        ]
+      },
+      "units": "dimensionless",
+      "notes": "NDVImin/NDVImax采用2%/98%分位数统计（可按你的论文口径改为min/max）。计算ln(c)前需避免c=0导致无穷。"
+    }
+  },
+  {
+    "step_id": 5,
+    "operation": "计算P因子（水土保持措施因子，坡度+土地利用查表）",
+    "description": "基于土地覆被(UMD)与坡度(slope_2022.tif)进行P赋值：水体/湿地/城市建筑/非植被地P=1；自然植被类P=0.8；耕地(12)按坡度分段查表：<5°:0.1，5-10°:0.221，10-15°:0.305，15-20°:0.575，20-25°:0.705，≥25°:0.8。该步骤依赖step3产生的坡度栅格（作为派生产物）。",
+    "factor_name": "P",
+    "input_files": [
+      "landcover",
+      "LS_factor_2022.tif",
+      "slope_2022.tif"
+    ],
+    "output_file": "P_factor_2022.tif",
+    "dependencies": [
+      3
+    ],
+    "tool_library": "rasterio, numpy",
+    "algorithm_formula": "Support Practice Factor Model (Loess Plateau slope+landuse lookup)",
+    "parameters": {
+      "constants": {},
+      "thresholds": {
+        "slope_bin1_deg": 5.0,
+        "slope_bin2_deg": 10.0,
+        "slope_bin3_deg": 15.0,
+        "slope_bin4_deg": 20.0,
+        "slope_bin5_deg": 25.0
+      },
+      "lookup_table": {
+        "P_default_by_landcover": [
+          {
+            "condition": "landcover in [0, 11, 13, 15]",
+            "value": 1.0
+          },
+          {
+            "condition": "landcover in [1,2,3,4,5,6,7,8,9,10,14]",
+            "value": 0.8
+          }
+        ],
+        "P_cropland_by_slope": [
+          {
+            "condition": "landcover==12 and slope_deg < 5",
+            "value": 0.1
+          },
+          {
+            "condition": "landcover==12 and 5 <= slope_deg < 10",
+            "value": 0.221
+          },
+          {
+            "condition": "landcover==12 and 10 <= slope_deg < 15",
+            "value": 0.305
+          },
+          {
+            "condition": "landcover==12 and 15 <= slope_deg < 20",
+            "value": 0.575
+          },
+          {
+            "condition": "landcover==12 and 20 <= slope_deg < 25",
+            "value": 0.705
+          },
+          {
+            "condition": "landcover==12 and slope_deg >= 25",
+            "value": 0.8
+          }
+        ]
+      },
+      "units": "dimensionless",
+      "notes": "坡度单位为度；对NoData像元保持NoData。非耕地优先按P_default_by_landcover赋值。"
+    }
+  },
+  {
+    "step_id": 6,
+    "operation": "综合计算土壤侵蚀模数A（RUSLE）",
+    "description": "按RUSLE公式计算年土壤侵蚀模数：A = R × K × LS × C × P。所有因子已在预处理阶段对齐空间分辨率与坐标系，因此直接逐像元相乘并输出结果栅格。",
+    "factor_name": "A",
+    "input_files": [
+      "R_factor_2022.tif",
+      "K_factor_2022.tif",
+      "LS_factor_2022.tif",
+      "C_factor_2022.tif",
+      "P_factor_2022.tif"
+    ],
+    "output_file": "soil_erosion_modulus_2022.tif",
+    "dependencies": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "tool_library": "rasterio, numpy",
+    "algorithm_formula": "Revised Universal Soil Loss Equation (RUSLE)",
+    "parameters": {
+      "constants": {},
+      "thresholds": {},
+      "lookup_table": {},
+      "units": "t·km⁻²·a⁻¹",
+      "notes": "输出单位可按你的论文口径换算（如t·ha⁻¹·a⁻¹或t·km⁻²·a⁻¹），关键是保持因子单位体系一致。"
+    }
+  }
+]

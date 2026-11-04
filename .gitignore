@@ -1,0 +1,28 @@
+.env
+configs/data_paths.local.json
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Raw geospatial data and generated raster outputs are not versioned.
+data/raw/
+data/processed/
+outputs/
+*.tif
+*.tiff
+*.img
+*.vrt
+*.aux.xml
+
+# Generated figures can be rebuilt from scripts/plot_results.py.
+figures/generated/*.png
+figures/generated/*.pdf
+

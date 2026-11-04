@@ -1,0 +1,27 @@
+{
+  "dem_raw": "data/raw/dem_2022.tif",
+  "dem_filled": "data/processed/dem_filled_2022.tif",
+  "FlowAcc": "data/processed/flow_accumulation_2022.tif",
+  "rainfall_year": "data/raw/rainfall_annual_2022.tif",
+  "rainfall_monthly": [
+    "data/raw/rainfall_monthly_2022_01.tif",
+    "data/raw/rainfall_monthly_2022_02.tif",
+    "data/raw/rainfall_monthly_2022_03.tif",
+    "data/raw/rainfall_monthly_2022_04.tif",
+    "data/raw/rainfall_monthly_2022_05.tif",
+    "data/raw/rainfall_monthly_2022_06.tif",
+    "data/raw/rainfall_monthly_2022_07.tif",
+    "data/raw/rainfall_monthly_2022_08.tif",
+    "data/raw/rainfall_monthly_2022_09.tif",
+    "data/raw/rainfall_monthly_2022_10.tif",
+    "data/raw/rainfall_monthly_2022_11.tif",
+    "data/raw/rainfall_monthly_2022_12.tif"
+  ],
+  "landcover": "data/raw/landcover_2022.tif",
+  "soil_silt": "data/raw/soil_silt.tif",
+  "soil_sand": "data/raw/soil_sand.tif",
+  "soil_toc": "data/raw/soil_toc.tif",
+  "soil_clay": "data/raw/soil_clay.tif",
+  "ndvi": "data/raw/ndvi_2022.tif"
+}
+

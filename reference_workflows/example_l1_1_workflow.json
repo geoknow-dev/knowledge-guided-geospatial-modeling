@@ -1,0 +1,292 @@
+[
+  {
+    "step_id": 1,
+    "operation": "计算降雨侵蚀力因子 (R)",
+    "description": "基于年降雨量数据，采用RUSLE模型中的降雨侵蚀力公式计算R因子。使用年降雨量（mm）直接作为R因子的代理变量，单位为MJ·mm/(hm²·h·年)。根据经验公式：R = 0.013 × P^1.3，其中P为年降雨量（mm）。",
+    "factor_name": "R",
+    "input_files": [
+      "rainfall_year"
+    ],
+    "output_file": "R_factor_2022.tif",
+    "dependencies": [],
+    "tool_library": "gdal",
+    "algorithm_formula": "RUSLE_R_factor",
+    "parameters": {
+      "constants": {
+        "a": 0.013,
+        "b": 1.3
+      },
+      "thresholds": {},
+      "lookup_table": {},
+      "units": "MJ·mm/(hm²·h·年)",
+      "notes": "R因子基于年降雨量经验公式估算，未考虑降雨强度分布。"
+    }
+  },
+  {
+    "step_id": 2,
+    "operation": "计算土壤可蚀性因子 (K)",
+    "description": "基于土壤质地数据，采用USLE/K因子经验公式计算K因子。K = 0.2 × (100 - clay) × (1 - silt/100) × (1 - sand/100) × (1 - toc/100)，其中clay、silt、sand、toc为各土壤组分百分比（%）。使用clay、silt、sand、toc数据进行计算。",
+    "factor_name": "K",
+    "input_files": [
+      "soil_clay",
+      "soil_silt",
+      "soil_sand",
+      "soil_toc"
+    ],
+    "output_file": "K_factor_2022.tif",
+    "dependencies": [],
+    "tool_library": "gdal",
+    "algorithm_formula": "USLE_K_factor",
+    "parameters": {
+      "constants": {
+        "scaling": 0.2
+      },
+      "thresholds": {
+        "min_clay": 0,
+        "max_clay": 100,
+        "min_silt": 0,
+        "max_silt": 100,
+        "min_sand": 0,
+        "max_sand": 100,
+        "min_toc": 0,
+        "max_toc": 100
+      },
+      "lookup_table": {},
+      "units": "t·h/(MJ·mm)",
+      "notes": "K因子基于土壤质地四分量计算，单位为t·h/(MJ·mm)，需确保输入数据为百分比（0-100）。"
+    }
+  },
+  {
+    "step_id": 3,
+    "operation": "计算地形因子 (LS)",
+    "description": "基于填洼后的DEM计算坡度和坡长因子。首先计算坡度（degrees），然后根据坡度分段计算坡长因子L。采用RUSLE标准分段：坡度<8%时，L = (λ/22.13)^m；坡度≥8%时，L = (λ/22.13)^m × (1 + 0.5 × (1 - 0.08/θ))，其中λ为坡长（m），θ为坡度（degrees），m=1.3。最终LS = L × S。S为坡度因子，S = sin(θ) / 0.0896。使用填洼DEM计算坡度和坡长。",
+    "factor_name": "LS",
+    "input_files": [
+      "dem_filled"
+    ],
+    "output_file": "LS_factor_2022.tif",
+    "dependencies": [],
+    "tool_library": "gdal",
+    "algorithm_formula": "RUSLE_LS_factor",
+    "parameters": {
+      "constants": {
+        "m": 1.3,
+        "lambda_ref": 22.13,
+        "s_ref": 0.0896
+      },
+      "thresholds": {
+        "slope_threshold": 8.0
+      },
+      "lookup_table": {},
+      "units": "无量纲",
+      "notes": "LS因子基于填洼DEM计算，坡度单位为度，坡长单位为米。"
+    }
+  },
+  {
+    "step_id": 4,
+    "operation": "计算植被覆盖与管理因子 (C)",
+    "description": "基于NDVI和土地覆被数据，构建C因子。首先根据土地覆被分类（UMD体系）确定基础C值，再结合NDVI进行修正。C = C_base × (1 - NDVI/100)，其中C_base根据土地覆被类型查表确定，NDVI为归一化植被指数（0-100）。土地覆被分类中：农田(12)、草地(10)、灌丛(6-7)、林地(1-5)、城市(13)、水体(0)等分别赋值。",
+    "factor_name": "C",
+    "input_files": [
+      "landcover",
+      "ndvi"
+    ],
+    "output_file": "C_factor_2022.tif",
+    "dependencies": [],
+    "tool_library": "gdal",
+    "algorithm_formula": "RUSLE_C_factor",
+    "parameters": {
+      "constants": {
+        "ndvi_scale": 100
+      },
+      "thresholds": {},
+      "lookup_table": {
+        "C_base_from_landcover": [
+          {
+            "condition": "landcover == 0",
+            "value": 0.01
+          },
+          {
+            "condition": "landcover == 1",
+            "value": 0.01
+          },
+          {
+            "condition": "landcover == 2",
+            "value": 0.01
+          },
+          {
+            "condition": "landcover == 3",
+            "value": 0.01
+          },
+          {
+            "condition": "landcover == 4",
+            "value": 0.01
+          },
+          {
+            "condition": "landcover == 5",
+            "value": 0.01
+          },
+          {
+            "condition": "landcover == 6",
+            "value": 0.01
+          },
+          {
+            "condition": "landcover == 7",
+            "value": 0.02
+          },
+          {
+            "condition": "landcover == 8",
+            "value": 0.05
+          },
+          {
+            "condition": "landcover == 9",
+            "value": 0.05
+          },
+          {
+            "condition": "landcover == 10",
+            "value": 0.05
+          },
+          {
+            "condition": "landcover == 11",
+            "value": 0.01
+          },
+          {
+            "condition": "landcover == 12",
+            "value": 0.2
+          },
+          {
+            "condition": "landcover == 13",
+            "value": 0.5
+          },
+          {
+            "condition": "landcover == 14",
+            "value": 0.1
+          },
+          {
+            "condition": "landcover == 15",
+            "value": 0.8
+          }
+        ]
+      },
+      "units": "无量纲",
+      "notes": "C因子基于土地覆被分类和NDVI联合估算，NDVI需归一化至0-100。"
+    }
+  },
+  {
+    "step_id": 5,
+    "operation": "计算水土保持措施因子 (P)",
+    "description": "基于土地覆被数据，根据土地利用类型确定P因子。P因子反映耕作方式、梯田、等高种植等水土保持措施的影响。根据UMD分类体系：农田(12)中若为梯田或等高种植，P=0.5；若为普通耕作，P=1.0；草地(10)、灌丛(6-7)、林地(1-5)、城市(13)、水体(0)等P=1.0；非植被(15)P=1.0。本步骤中，农田类土地覆被默认为普通耕作，P=1.0。",
+    "factor_name": "P",
+    "input_files": [
+      "landcover"
+    ],
+    "output_file": "P_factor_2022.tif",
+    "dependencies": [],
+    "tool_library": "gdal",
+    "algorithm_formula": "RUSLE_P_factor",
+    "parameters": {
+      "constants": {},
+      "thresholds": {},
+      "lookup_table": {
+        "P_from_landcover": [
+          {
+            "condition": "landcover == 0",
+            "value": 1.0
+          },
+          {
+            "condition": "landcover == 1",
+            "value": 1.0
+          },
+          {
+            "condition": "landcover == 2",
+            "value": 1.0
+          },
+          {
+            "condition": "landcover == 3",
+            "value": 1.0
+          },
+          {
+            "condition": "landcover == 4",
+            "value": 1.0
+          },
+          {
+            "condition": "landcover == 5",
+            "value": 1.0
+          },
+          {
+            "condition": "landcover == 6",
+            "value": 1.0
+          },
+          {
+            "condition": "landcover == 7",
+            "value": 1.0
+          },
+          {
+            "condition": "landcover == 8",
+            "value": 1.0
+          },
+          {
+            "condition": "landcover == 9",
+            "value": 1.0
+          },
+          {
+            "condition": "landcover == 10",
+            "value": 1.0
+          },
+          {
+            "condition": "landcover == 11",
+            "value": 1.0
+          },
+          {
+            "condition": "landcover == 12",
+            "value": 1.0
+          },
+          {
+            "condition": "landcover == 13",
+            "value": 1.0
+          },
+          {
+            "condition": "landcover == 14",
+            "value": 1.0
+          },
+          {
+            "condition": "landcover == 15",
+            "value": 1.0
+          }
+        ]
+      },
+      "units": "无量纲",
+      "notes": "P因子基于土地覆被类型赋值，未考虑具体工程措施，农田默认为普通耕作。"
+    }
+  },
+  {
+    "step_id": 6,
+    "operation": "计算土壤侵蚀模数 (A)",
+    "description": "基于RUSLE模型，综合所有因子计算年土壤侵蚀模数。A = R × K × LS × C × P，单位为t/(hm²·年)。所有输入因子均已预处理并统一空间分辨率。使用GDAL进行栅格代数运算。",
+    "factor_name": "A",
+    "input_files": [
+      "R_factor_2022.tif",
+      "K_factor_2022.tif",
+      "LS_factor_2022.tif",
+      "C_factor_2022.tif",
+      "P_factor_2022.tif"
+    ],
+    "output_file": "soil_erosion_modulus_2022.tif",
+    "dependencies": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "tool_library": "gdal",
+    "algorithm_formula": "RUSLE_A_factor",
+    "parameters": {
+      "constants": {},
+      "thresholds": {},
+      "lookup_table": {},
+      "units": "t/(hm²·年)",
+      "notes": "最终土壤侵蚀模数为RUSLE模型五因子乘积，单位为吨每公顷每年。"
+    }
+  }
+]

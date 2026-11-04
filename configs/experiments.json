@@ -1,0 +1,13 @@
+{
+  "knowledge_levels": ["L1-1", "L1-2", "L2-1", "L2-2", "L3-1", "L3-2"],
+  "temperature": 0.1,
+  "conversation_history_enabled": false,
+  "knowledge_base_injection_enabled": true,
+  "tasks": {
+    "M1": "Calculate the soil erodibility factor of the Loess Plateau in 2022.",
+    "M2": "Calculate the slope length and slope factor of the Loess Plateau.",
+    "M3": "Calculate the soil erosion modulus of the Loess Plateau in 2022."
+  },
+  "standard_dag_nodes": {"M1": 1, "M2": 4, "M3": 8}
+}
+

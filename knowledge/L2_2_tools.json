@@ -1,0 +1,166 @@
+ {
+  "knowledge_meta": {
+    "level_id": "L2-2",
+    "level_name": "数据资源与计算工具本体 (Data Resources & Computational Tools Ontology)",
+    "scope": "Physical Assets & Implementation Operators (物理资产与实现算子)",
+    "description": "建立物理世界数据路径与逻辑世界数据定义的映射关系，并提供可调用的计算工具库清单，支持Agent进行代码实例化。",
+    "version": "v2.0_Data_Tools_Map"
+  },
+  "data_resources": [
+    {
+      "data_id": "DAT_DEM_RAW",
+      "semantic_name": "数字高程模型 (Digital Elevation Model)",
+      "physical_path": "data/path_from_configs_data_paths_json",
+      "metadata": {
+        "source": "Google Earth Engine (SRTM)",
+        "spatial_resolution": "30m",
+        "temporal_resolution": "年 (Yearly)",
+        "description": "SRTM高程数据集，用于提取坡度、坡长等地形因子。"
+      },
+      "usage_role": "Base Topography Input"
+    },
+    {
+      "data_id": "DAT_DEM_FILLED",
+      "semantic_name": "填洼DEM (Filled DEM)",
+      "physical_path": "data/path_from_configs_data_paths_json",
+      "metadata": {
+        "source": "Derived from Raw DEM",
+        "spatial_resolution": "30m",
+        "description": "经水文预处理填补洼地后的高程数据，用于流向计算。"
+      },
+      "usage_role": "Hydrological Analysis Input"
+    },
+    {
+      "data_id": "DAT_RAIN_YEAR",
+      "semantic_name": "年降雨量数据 (Annual Rainfall)",
+      "physical_path": "data/path_from_configs_data_paths_json",
+      "metadata": {
+        "source": "国家青藏高原科学数据中心 (National Tibetan Plateau Data Center)",
+        "spatial_resolution": "1km",
+        "temporal_resolution": "年 (Yearly)",
+        "description": "中国区域高时空分辨率地面气象要素驱动数据集。"
+      },
+      "usage_role": "R_Factor Calculation"
+    },
+    {
+      "data_id": "DAT_RAIN_MONTH",
+      "semantic_name": "月降雨量列表 (Monthly Rainfall List)",
+      "physical_path": "config key: rainfall_monthly",
+      "metadata": {
+        "source": "国家青藏高原科学数据中心",
+        "spatial_resolution": "1km",
+        "temporal_resolution": "月 (Monthly)",
+        "structure": "List of 12 raster paths (Jan-Dec)"
+      },
+      "usage_role": "R_Factor Temporal Integration"
+    },
+    {
+      "data_id": "DAT_SOIL_ATTR",
+      "semantic_name": "土壤属性集合 (Soil Properties)",
+      "components": [
+        { "type": "Silt (粉砂)", "path": "data/path_from_configs_data_paths_json" },
+        { "type": "Sand (沙土)", "path": "data/path_from_configs_data_paths_json" },
+        { "type": "Clay (黏土)", "path": "data/path_from_configs_data_paths_json" },
+        { "type": "TOC (有机碳)", "path": "data/path_from_configs_data_paths_json" }
+      ],
+      "metadata": {
+        "source": "FAO Soils Portal (HWSD v1.2)",
+        "spatial_resolution": "1km",
+        "description": "Harmonized World Soil Database v1.2，包含机械组成与化学属性。"
+      },
+      "usage_role": "K_Factor Calculation"
+    },
+    {
+      "data_id": "DAT_NDVI",
+      "semantic_name": "植被指数 (NDVI)",
+      "physical_path": "data/path_from_configs_data_paths_json",
+      "metadata": {
+        "source": "Google Earth Engine (MOD13A2)",
+        "spatial_resolution": "1km",
+        "temporal_resolution": "年 (Yearly Composite)",
+        "description": "Terra Vegetation Indices，反映地表植被生长状况。"
+      },
+      "usage_role": "C_Factor Inversion"
+    },
+    {
+      "data_id": "DAT_LULC",
+      "semantic_name": "土地利用/覆被 (Land Cover)",
+      "physical_path": "data/path_from_configs_data_paths_json",
+      "metadata": {
+        "source": "Google Earth Engine (MCD12Q1)",
+        "spatial_resolution": "500m",
+        "temporal_resolution": "年 (Yearly)",
+        "description": "MODIS Land Cover Type Product，用于水保措施赋值。"
+      },
+      "usage_role": "P_Factor Assignment"
+    }
+  ],
+  "tool_inventory": [
+    {
+      "library_name": "rasterio",
+      "version_constraint": ">=1.3.0",
+      "role": "Geospatial I/O (空间数据读写)",
+      "key_functions": [
+        {
+          "name": "rasterio.open(path, mode)",
+          "definition": "Opens a raster file for reading or writing.",
+          "purpose": "读取TIFF数据为数组，或创建新的TIFF文件存储结果。"
+        },
+        {
+          "name": "dataset.read(band_index)",
+          "definition": "Reads raster data as a numpy array.",
+          "purpose": "将地理栅格转换为可计算的数值矩阵。"
+        },
+        {
+          "name": "dataset.profile",
+          "definition": "Metadata dictionary of the raster (crs, transform, width, height).",
+          "purpose": "获取地理坐标参考系与仿射变换参数，确保输出数据的空间位置正确。"
+        }
+      ]
+    },
+    {
+      "library_name": "numpy",
+      "alias": "np",
+      "version_constraint": ">=1.26.0",
+      "role": "Map Algebra & Matrix Calculation (地图代数与矩阵运算)",
+      "key_functions": [
+        {
+          "name": "np.where(condition, x, y)",
+          "definition": "Return elements chosen from x or y depending on condition.",
+          "purpose": "实现条件逻辑运算（如：若坡度<5度则赋值0.5，否则赋值1.0）。"
+        },
+        {
+          "name": "np.power(x, exponent)",
+          "definition": "First array elements raised to powers from second array.",
+          "purpose": "实现幂函数运算（如：降雨侵蚀力的经验公式计算）。"
+        },
+        {
+          "name": "np.exp(x)",
+          "definition": "Calculate the exponential of all elements in the input array.",
+          "purpose": "实现指数运算（如：K因子EPIC方程中的指数项）。"
+        },
+        {
+          "name": "np.gradient(f)",
+          "definition": "Return the gradient of an N-dimensional array.",
+          "purpose": "计算高程矩阵的梯度，用于推导坡度（Slope）和坡向（Aspect）。"
+        },
+        {
+          "name": "np.arctan(x)",
+          "definition": "Trigonometric inverse tangent, element-wise.",
+          "purpose": "将梯度值转换为弧度制的坡度值。"
+        }
+      ]
+    },
+    {
+      "library_name": "scipy.ndimage",
+      "role": "Spatial Filter & Neighborhood Analysis (空间滤波与邻域分析)",
+      "key_functions": [
+        {
+          "name": "scipy.ndimage.convolve(input, weights)",
+          "definition": "Multidimensional convolution.",
+          "purpose": "用于实现3x3或5x5邻域窗口分析，处理平滑或特定地形特征提取。"
+        }
+      ]
+    }
+  ]
+}
